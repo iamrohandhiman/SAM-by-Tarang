@@ -10,7 +10,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <Navbar/>
-      <FabricCanvas/>
+    
       <Routes> 
       <Route path="/user/select/area" element={<AreaSelection />}/>
       <Route path="/user/select/area/user/area/plan" element={<PlaningPage/>}/>

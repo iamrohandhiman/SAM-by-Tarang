@@ -4,15 +4,15 @@ export const FabricCanvas = () => {
   const canvasRef = useRef(null);
   const fabricRef = useRef(null);
   const [isHorizontal, setIsHorizontal] = useState(true);
+  const [points, setPoints] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Function to convert the coordinates to numbers
   function convertToNumbers(selectedPoints) {
     return selectedPoints
-      .map(point => point.split(',').map(Number))  // Convert each pair to numbers
-      .flat();  // Flatten the array into a 1D array
+      .map(point => point.split(',').map(Number))
+      .flat();
   }
 
-  // Fetch data from the server when the component mounts
   useEffect(() => {
     // Load Fabric.js from CDN
     const script = document.createElement('script');
@@ -20,26 +20,10 @@ export const FabricCanvas = () => {
     script.async = true;
     
     script.onload = () => {
-      initCanvas([]);
+      setIsInitialized(true);
     };
     
     document.body.appendChild(script);
-
-    // Fetch data from the server
-    const fetchData = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/user/get');
-        const data = await response.json();
-        const selectedPoints = data.selectedPoints;
-        const coordinates = convertToNumbers(selectedPoints);
-        console.log(coordinates);
-        initCanvas(coordinates);  // Pass coordinates to the canvas initialization
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
 
     return () => {
       document.body.removeChild(script);
@@ -49,25 +33,46 @@ export const FabricCanvas = () => {
     };
   }, []);
 
-  // Updated initCanvas to accept coordinates
-  const initCanvas = (coordinates) => {
+  // Separate useEffect for data fetching
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/user/get');
+        const data = await response.json();
+        const coordinates = convertToNumbers(data.selectedPoints);
+        setPoints(coordinates);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    if (isInitialized) {
+      fetchData();
+    }
+  }, [isInitialized]);
+
+  // Separate useEffect for canvas initialization
+  useEffect(() => {
+    if (isInitialized && points.length > 0) {
+      initCanvas();
+    }
+  }, [isInitialized, points]);
+
+  const initCanvas = () => {
     fabricRef.current = new fabric.Canvas('fabric-holder');
     const canvas = fabricRef.current;
 
-    if (!coordinates || coordinates.length === 0) {
-      return; // Early return if no coordinates are passed
-    }
+    // Find the min and max values
+    const minLat = Math.min(...points.filter((_, i) => i % 2 === 0));
+    const maxLat = Math.max(...points.filter((_, i) => i % 2 === 0));
+    const minLng = Math.min(...points.filter((_, i) => i % 2 !== 0));
+    const maxLng = Math.max(...points.filter((_, i) => i % 2 !== 0));
 
     // Normalize the points
-    const minLat = Math.min(...coordinates.filter((_, i) => i % 2 === 0));
-    const maxLat = Math.max(...coordinates.filter((_, i) => i % 2 === 0));
-    const minLng = Math.min(...coordinates.filter((_, i) => i % 2 !== 0));
-    const maxLng = Math.max(...coordinates.filter((_, i) => i % 2 !== 0));
-
     const normalizedPoints = [];
-    for (let i = 0; i < coordinates.length; i += 2) {
-      const lat = coordinates[i];
-      const lng = coordinates[i + 1];
+    for (let i = 0; i < points.length; i += 2) {
+      const lat = points[i];
+      const lng = points[i + 1];
       const y = canvas.height - (((lat - minLat) / (maxLat - minLat)) * canvas.height);
       const x = ((lng - minLng) / (maxLng - minLng)) * canvas.width;
       normalizedPoints.push({ x, y });
@@ -194,8 +199,10 @@ export const FabricCanvas = () => {
   const toggleDirection = () => {
     setIsHorizontal(!isHorizontal);
     if (fabricRef.current) {
-      const normalizedPoints = fabricRef.current.getObjects('polygon')[0].points;
-      drawBoxes(fabricRef.current, normalizedPoints);
+      const normalizedPoints = fabricRef.current.getObjects('polygon')[0]?.points;
+      if (normalizedPoints) {
+        drawBoxes(fabricRef.current, normalizedPoints);
+      }
     }
   };
 
