@@ -41,6 +41,36 @@ export const AreaSelection = () => {
     });
   };
 
+  const formatSelectedPoints = () => {
+    return selectedPointsParent.map(point => `${point.lat},${point.lng}`);
+  };
+
+  const handleProceed = async () => {
+    const areaData = {
+      area: polygonAreaParent,
+      location: pointLocationParent[0] || 'Not selected',
+      selectedPoints: formatSelectedPoints(),
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/user/pageOne/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(areaData),
+      });
+
+      if (response.ok) {
+        console.log('Data posted successfully');
+      } else {
+        console.error('Failed to post data');
+      }
+    } catch (error) {
+      console.error('Error posting data:', error);
+    }
+  };
+
   return (
     <>
       <div className="absolute w-full">
@@ -95,7 +125,9 @@ export const AreaSelection = () => {
               </div>
               <div className="w-[80%] h-[0.5px] bg-white mt-3 ml-12"></div>
 
-              <div className=' transition-all hover:opacity-45 rounded-[50px] flex justify-center items-center h-[43px] w-[184px] bg-slate-100 mt-[100px]'><Link to="user/area/plan">Proceed</Link></div>
+              <div className='transition-all hover:opacity-45 rounded-[50px] flex justify-center items-center h-[43px] w-[184px] bg-slate-100 mt-[100px]'>
+                <Link to="user/area/plan" onClick={handleProceed}>Proceed</Link>
+              </div>
             </div>
           </div>
 

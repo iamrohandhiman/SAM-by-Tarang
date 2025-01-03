@@ -5,6 +5,14 @@ export const FabricCanvas = () => {
   const fabricRef = useRef(null);
   const [isHorizontal, setIsHorizontal] = useState(true);
 
+  // Function to convert the coordinates to numbers
+  function convertToNumbers(selectedPoints) {
+    return selectedPoints
+      .map(point => point.split(',').map(Number))  // Convert each pair to numbers
+      .flat();  // Flatten the array into a 1D array
+  }
+
+  // Fetch data from the server when the component mounts
   useEffect(() => {
     // Load Fabric.js from CDN
     const script = document.createElement('script');
@@ -12,10 +20,26 @@ export const FabricCanvas = () => {
     script.async = true;
     
     script.onload = () => {
-      initCanvas();
+      initCanvas([]);
     };
     
     document.body.appendChild(script);
+
+    // Fetch data from the server
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/user/get');
+        const data = await response.json();
+        const selectedPoints = data.selectedPoints;
+        const coordinates = convertToNumbers(selectedPoints);
+        console.log(coordinates);
+        initCanvas(coordinates);  // Pass coordinates to the canvas initialization
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
 
     return () => {
       document.body.removeChild(script);
@@ -25,29 +49,25 @@ export const FabricCanvas = () => {
     };
   }, []);
 
-  const initCanvas = () => {
+  // Updated initCanvas to accept coordinates
+  const initCanvas = (coordinates) => {
     fabricRef.current = new fabric.Canvas('fabric-holder');
     const canvas = fabricRef.current;
 
-    // Define the points for the polygon
-    const points = [
-      19.206210184668198, 72.87420292877489,
-      19.205979688860328, 72.87419219993883,
-      19.20597462301477, 72.87458112024599,
-      19.20596195840019, 72.87497272276217
-    ];
-
-    // Find the min and max values
-    const minLat = Math.min(...points.filter((_, i) => i % 2 === 0));
-    const maxLat = Math.max(...points.filter((_, i) => i % 2 === 0));
-    const minLng = Math.min(...points.filter((_, i) => i % 2 !== 0));
-    const maxLng = Math.max(...points.filter((_, i) => i % 2 !== 0));
+    if (!coordinates || coordinates.length === 0) {
+      return; // Early return if no coordinates are passed
+    }
 
     // Normalize the points
+    const minLat = Math.min(...coordinates.filter((_, i) => i % 2 === 0));
+    const maxLat = Math.max(...coordinates.filter((_, i) => i % 2 === 0));
+    const minLng = Math.min(...coordinates.filter((_, i) => i % 2 !== 0));
+    const maxLng = Math.max(...coordinates.filter((_, i) => i % 2 !== 0));
+
     const normalizedPoints = [];
-    for (let i = 0; i < points.length; i += 2) {
-      const lat = points[i];
-      const lng = points[i + 1];
+    for (let i = 0; i < coordinates.length; i += 2) {
+      const lat = coordinates[i];
+      const lng = coordinates[i + 1];
       const y = canvas.height - (((lat - minLat) / (maxLat - minLat)) * canvas.height);
       const x = ((lng - minLng) / (maxLng - minLng)) * canvas.width;
       normalizedPoints.push({ x, y });
@@ -205,4 +225,3 @@ export const FabricCanvas = () => {
     </div>
   );
 };
-
