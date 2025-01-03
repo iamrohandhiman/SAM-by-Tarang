@@ -8,6 +8,7 @@ export const SecondaryNavbar = () => {
  
 
   return (
+    <div className='absolute w-full z-50'>
     <div className='flex justify-center items-center bg-blue-950 border-[1px] border-blue-300 '>
       {/* left center */}
 
@@ -95,5 +96,6 @@ export const SecondaryNavbar = () => {
           </div>
 
     </div>
+  </div>
   )
 }

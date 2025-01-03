@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { IconDropDown } from '../../assets/fonts/IconDropDown.jsx';
+import { Outlet, Link } from "react-router-dom";
 import Logo from '../../assets/images/08pAuxMLiJOy.png';
 import { SecondaryNavbar } from './SecondaryNavbar.jsx';
 
@@ -45,7 +46,7 @@ export const Navbar = () => {
             Login
           </div>
           <div className="bg-blue-900 h-[40px] w-[124px] flex justify-center items-center font-sans text-[20px] font-normal text-white ml-16 border-[1px] border-blue-200 rounded-[50px] transition-all delay-10 cursor-pointer hover:opacity-50">
-            Plan Solar
+          <Link to="/user/select/area">Plan Solar</Link>
           </div>
         </div>
       </div>
