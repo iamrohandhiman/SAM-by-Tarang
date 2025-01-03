@@ -4,6 +4,7 @@ import { useGeolocation } from '../../hooks/useGeolocation';
 import './MapComponent.css';
 
 
+
 const GOOGLE_MAPS_API_KEY = "AIzaSyCeo40A2OTwGex0a8rg1G6-gB3z7xWG1Uk"
 
 const colors = {
@@ -37,57 +38,60 @@ const mapStyles = {
   ]
 };
 
-export default function MapComponent({setSelectedPointsParent,setPointsLocationParent,setPolygonAreaParent}) {
+export default function MapComponent({setSelectedPointsParent,setPointsLocationParent,setPolygonAreaParent,setGeocoder,geocoder}) {
   const mapRef = useRef(null);
   const { coords } = useGeolocation();
   const [map, setMap] = useState(null);
   const [selectedPoints, setSelectedPoints] = useState([]);
   const [markers, setMarkers] = useState([]);
   const [polygon, setPolygon] = useState(null);
-  const [polygonArea, setPolygonArea] = useState(0);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [geocoder, setGeocoder] = useState(null);
   const [isInitialCenter, setIsInitialCenter] = useState(true);
   const markersRef = useRef([]);
+  const [polygonArea,setPolygonArea] = useState(0)
   const lastActionRef = useRef('none'); // To track whether the last action was 'add' or 'move'
   const [pointLocations, setPointLocations] = useState([]);
+
+  
+  
+
   const updatePolygon = (points) => {
     if (points.length < 3) {
-      if (polygon) {
-        polygon.setMap(null);
-        setPolygon(null);
-      }
-      setPolygonArea(0);
-      setPolygonAreaParent(0)
-      return;
+        if (polygon) {
+            polygon.setMap(null);
+            setPolygon(null);
+        }
+        setPolygonArea(0);
+        setPolygonAreaParent(0);
+        return;
     }
 
     const polygonPath = points.map(point => new google.maps.LatLng(point.lat, point.lng));
-    
-    if (polygon) {
-      polygon.setPath(polygonPath);
-    } else {
-      const newPolygon = new google.maps.Polygon({
-        paths: points,
-        strokeColor: colors.line,
-        strokeOpacity: 0.8,
-        strokeWeight: 3,
-        fillColor: colors.fill,
-        fillOpacity: 0.35,
-        geodesic: true
-      });
 
-      newPolygon.setMap(map);
-      setPolygon(newPolygon);
+    if (polygon) {
+        polygon.setPath(polygonPath);
+    } else {
+        const newPolygon = new google.maps.Polygon({
+            paths: points,
+            strokeColor: colors.line,
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            fillColor: colors.fill,
+            fillOpacity: 0.35,
+            geodesic: true,
+        });
+
+        newPolygon.setMap(map);
+        setPolygon(newPolygon);
     }
 
     if (window.google && google.maps.geometry.spherical) {
-      const area = google.maps.geometry.spherical.computeArea(polygonPath);
-      setPolygonArea(Math.round(area));
-      setPolygonAreaParent(Math.round(area))
+        const area = google.maps.geometry.spherical.computeArea(polygonPath);
+        setPolygonArea(Math.round(area));
+        setPolygonAreaParent(Math.round(area));
     }
-  };
+};
 
 
 
