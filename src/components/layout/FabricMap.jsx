@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export const FabricCanvas = () => {
   const canvasRef = useRef(null);
   const fabricRef = useRef(null);
+  const [isHorizontal, setIsHorizontal] = useState(true);
 
   useEffect(() => {
     // Load Fabric.js from CDN
@@ -25,7 +26,6 @@ export const FabricCanvas = () => {
   }, []);
 
   const initCanvas = () => {
-    // Create a Fabric.js canvas
     fabricRef.current = new fabric.Canvas('fabric-holder');
     const canvas = fabricRef.current;
 
@@ -61,9 +61,44 @@ export const FabricCanvas = () => {
     });
     canvas.add(polygon);
 
+    // Add measurements between points
+    for (let i = 0; i < normalizedPoints.length; i++) {
+      const current = normalizedPoints[i];
+      const next = normalizedPoints[(i + 1) % normalizedPoints.length];
+      
+      // Calculate distance and midpoint
+      const dx = next.x - current.x;
+      const dy = next.y - current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy).toFixed(2);
+      const midX = (current.x + next.x) / 2;
+      const midY = (current.y + next.y) / 2;
+      
+      // Add measurement text
+      const text = new fabric.Text(`${distance}`, {
+        left: midX,
+        top: midY,
+        fontSize: 12,
+        fill: 'black',
+        backgroundColor: 'white'
+      });
+      canvas.add(text);
+    }
+
+    drawBoxes(canvas, normalizedPoints);
+  };
+
+  const drawBoxes = (canvas, normalizedPoints) => {
+    // Clear existing boxes
+    const objects = canvas.getObjects();
+    objects.forEach(obj => {
+      if (obj.type === 'rect') {
+        canvas.remove(obj);
+      }
+    });
+
     // Box properties
-    const boxWidth = 20;
-    const boxHeight = 40;
+    const boxWidth = isHorizontal ? 40 : 20;
+    const boxHeight = isHorizontal ? 20 : 40;
     const spacing = 10;
 
     // Helper function to check if point is in polygon
@@ -107,14 +142,15 @@ export const FabricCanvas = () => {
         }
       }
     }
+    canvas.renderAll();
   };
 
   const addBox = () => {
     if (!fabricRef.current) return;
     
     const canvas = fabricRef.current;
-    const boxWidth = 20;
-    const boxHeight = 40;
+    const boxWidth = isHorizontal ? 40 : 20;
+    const boxHeight = isHorizontal ? 20 : 40;
     const x = Math.random() * (canvas.width - boxWidth);
     const y = Math.random() * (canvas.height - boxHeight);
     
@@ -135,14 +171,30 @@ export const FabricCanvas = () => {
     canvas.renderAll();
   };
 
+  const toggleDirection = () => {
+    setIsHorizontal(!isHorizontal);
+    if (fabricRef.current) {
+      const normalizedPoints = fabricRef.current.getObjects('polygon')[0].points;
+      drawBoxes(fabricRef.current, normalizedPoints);
+    }
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
-      <button 
-        onClick={addBox}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-      >
-        Add Box
-      </button>
+      <div className="flex gap-4 mb-4">
+        <button 
+          onClick={addBox}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Add Box
+        </button>
+        <button 
+          onClick={toggleDirection}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+        >
+          {isHorizontal ? 'Switch to Vertical' : 'Switch to Horizontal'}
+        </button>
+      </div>
       <canvas 
         ref={canvasRef}
         id="fabric-holder" 
