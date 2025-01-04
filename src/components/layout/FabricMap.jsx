@@ -6,7 +6,7 @@ export const FabricCanvas = () => {
   const [isHorizontal, setIsHorizontal] = useState(true);
   const [points, setPoints] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
-
+  let count = 0
   function convertToNumbers(selectedPoints) {
     return selectedPoints
       .map(point => point.split(',').map(Number))
@@ -122,8 +122,8 @@ export const FabricCanvas = () => {
     });
 
     // Box properties
-    const boxWidth = isHorizontal ? 40 : 20;
-    const boxHeight = isHorizontal ? 20 : 40;
+    const boxWidth = isHorizontal ? pw : ph;
+    const boxHeight = isHorizontal ? ph : pw;
     const spacing = 10;
 
     // Helper function to check if point is in polygon
@@ -146,11 +146,12 @@ export const FabricCanvas = () => {
              isPointInPolygon(x, y + height, polyPoints) &&
              isPointInPolygon(x + width, y + height, polyPoints);
     };
-
+    
     // Place boxes in grid
     for (let x = 0; x < canvas.width; x += boxWidth + spacing) {
       for (let y = 0; y < canvas.height; y += boxHeight + spacing) {
         if (isBoxCompletelyInside(x, y, boxWidth, boxHeight, normalizedPoints)) {
+          count++;
           const box = new fabric.Rect({
             left: x,
             top: y,
@@ -168,6 +169,7 @@ export const FabricCanvas = () => {
       }
     }
     canvas.renderAll();
+  
   };
 
   const addBox = () => {

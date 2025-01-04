@@ -14,6 +14,7 @@ export const AreaSelection = () => {
   const [polygonAreaParent, setPolygonAreaParent] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [geocoder, setGeocoder] = useState(null);
+  
 
   useEffect(() => {
     const fetchWeatherData = async () => {
